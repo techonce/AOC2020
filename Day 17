@@ -1,0 +1,156 @@
+Imports System.Text.RegularExpressions
+Imports System.Collections.Generic
+
+Module Module1
+
+    Public Pocket(40, 40, 40, 40) As Boolean
+    Public minX As Int16, minY As Int16, minZ As Int16, maxX As Int16, maxY As Int16, maxZ As Int16, minW As Int16, maxW As Int16
+
+    Sub Main()
+
+        Dim fileReader As System.IO.StreamReader, stringReader As String, IMDone As Boolean
+
+        Dim X As Int16, Y As Int16, Z As Int16, W As Int16
+        Dim Pocket2(40, 40, 40, 40) As Boolean
+
+        Dim neighbors As Int16
+
+        Dim rollingAnswer As Int64, Passes As Int16
+
+        fileReader = My.Computer.FileSystem.OpenTextFileReader("G:\AOC17 actual.txt")
+
+        Passes = 6
+
+        Y = 20
+        Z = 20
+        W = 20
+
+        Do Until IMDone = True
+
+            stringReader = fileReader.ReadLine()
+
+            If stringReader = "" Then
+
+                IMDone = True
+            Else
+
+                For X = 20 To 20 + Len(stringReader) - 1
+
+                    If Mid(stringReader, X - 19, 1) = "#" Then
+                        Pocket(X, Y, Z, W) = True
+                    Else
+                        Pocket(X, Y, Z, W) = False
+                    End If
+
+                Next
+                Y = Y + 1
+
+            End If
+
+        Loop
+
+        minX = minY = minZ = minW = 20
+        maxX = 28
+        maxY = Y - 1
+        maxZ = maxX = 20
+
+        For cycle = 1 To Passes
+
+            For W = minW - 1 To maxW + 1
+                For X = minX - 1 To maxX + 1
+                    For Y = minY - 1 To maxY + 1
+                        For Z = minZ - 1 To maxZ + 1
+                            neighbors = 0
+                            For w2 = W - 1 To W + 1
+                                For x2 = X - 1 To X + 1
+                                    For Y2 = Y - 1 To Y + 1
+                                        For z2 = Z - 1 To Z + 1
+                                            If Pocket(x2, Y2, z2, w2) = True Then
+                                                neighbors += 1
+                                            End If
+                                        Next
+                                    Next
+                                Next
+                            Next
+
+                            If Pocket(X, Y, Z, W) = True Then
+                                If neighbors = 3 Or neighbors = 4 Then ' I increased count by 1 to account for it detecting itself
+                                    Pocket2(X, Y, Z, W) = True
+                                Else
+                                    Pocket2(X, Y, Z, W) = False
+                                End If
+                            Else
+                                If neighbors = 3 Then
+                                    Pocket2(X, Y, Z, W) = True
+                                Else
+                                    Pocket2(X, Y, Z, W) = False
+                                End If
+                            End If
+                        Next
+                    Next
+                Next
+            Next
+            Pocket = Pocket2
+            ReDim Pocket2(40, 40, 40, 40)
+
+            minX += -1
+            minY += -1
+            minZ += -1
+            maxX += 1
+            maxY += 1
+            maxZ += 1
+            minW += -1
+            maxW += 1
+
+        Next
+
+        rollingAnswer = 0
+
+        For X = minX To maxX
+            For Y = minY To maxY
+                For Z = minZ To maxZ
+                    For W = minW To maxW
+                        If Pocket(X, Y, Z, W) = True Then rollingAnswer += 1
+                    Next
+                Next
+            Next
+        Next
+
+
+        Debug.Print("Part 2: " & rollingAnswer)
+
+    End Sub
+
+    'Private Sub PrintMatrix()
+    '    Dim lineString As String, z As Int16
+
+    '    For z = minZ To maxZ
+
+
+    '        Debug.Print("Z = " & z)
+    '        For y = minY To maxY
+
+    '            lineString = y & "  "
+
+    '            For x = minX To maxX
+    '                If Pocket(x, y, z) Then
+    '                    lineString = lineString & "#"
+    '                Else
+    '                    lineString = lineString & "."
+    '                End If
+    '            Next
+
+    '            Debug.Print(lineString)
+
+    '        Next
+
+    '        Debug.Print("")
+
+    '    Next
+
+
+
+    'End Sub
+
+End Module
+
