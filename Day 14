@@ -1,0 +1,147 @@
+Imports System.Text.RegularExpressions
+Imports System.Collections.Generic
+
+Module Module1
+    Sub Main()
+
+        Dim fileReader As System.IO.StreamReader, IMDone As Boolean, maskString As String, memReg(99999) As Int64, cmdTarget As Int64, cmdValue As Int64
+
+        Dim memReg2 As Dictionary(Of String, Int64) = New Dictionary(Of String, Int64)()
+
+        Dim stringReader As String
+        Dim cmdRegEx As New Regex("\d+", RegexOptions.Compiled)
+        Dim cmdMatch As Match
+        Dim maskRegEc As New Regex("X", RegexOptions.Compiled)
+        Dim binValue As String, newBinValue As String, rollSum As Int64, part As Int64
+
+        Dim arrNum As Int64, memTargets() As String, hits As Int64, binTarget As String
+
+        'fileReader = My.Computer.FileSystem.OpenTextFileReader("G:\AOC14 sample2.txt")
+        fileReader = My.Computer.FileSystem.OpenTextFileReader("G:\AOC14 actual.txt")
+
+        part = 2
+
+        Do Until IMDone = True
+
+            stringReader = fileReader.ReadLine
+
+            If stringReader = "" Then
+                IMDone = True
+            ElseIf Left(stringReader, 4) = "mask" Then
+                maskString = Right(stringReader, 36)
+            Else
+
+                cmdMatch = cmdRegEx.Match(stringReader)
+
+                cmdTarget = cmdMatch.Value
+                cmdValue = cmdMatch.NextMatch.Value
+
+                If part = 1 Then
+                    binValue = Convert2Bin(cmdValue)
+                    newBinValue = ""
+
+                    For c = 1 To 36
+                        If Mid(maskString, c, 1) = "X" Then
+                            newBinValue = newBinValue & Mid(binValue, c, 1)
+                        Else
+                            newBinValue = newBinValue & Mid(maskString, c, 1)
+                        End If
+                    Next
+
+                    memReg(cmdTarget) = Convert2Dec(newBinValue)
+                Else
+                    arrNum = (2 ^ maskRegEc.Matches(maskString).Count)
+                    ReDim memTargets(arrNum - 1)
+                    hits = 0
+
+                    binTarget = Convert2Bin(cmdTarget)
+
+                    For c = 1 To 36
+
+                        If Mid(maskString, c, 1) = "X" Then
+                            hits = hits + 1
+                            For t = 0 To arrNum - 1 Step arrNum / (2 ^ (hits - 1))
+                                memTargets(t + arrNum / (2 ^ hits)) = memTargets(t)
+                                memTargets(t) = memTargets(t) & "1"
+                                memTargets(t + arrNum / (2 ^ hits)) = memTargets(t + arrNum / (2 ^ hits)) & "0"
+                            Next
+
+                        ElseIf Mid(maskString, c, 1) = "1" Then
+                            For t = 0 To arrNum - 1 Step arrNum / (2 ^ hits)
+                                memTargets(t) = memTargets(t) & "1"
+                            Next
+                        Else
+                            For t = 0 To arrNum - 1 Step arrNum / (2 ^ hits)
+                                memTargets(t) = memTargets(t) & Mid(binTarget, c, 1)
+                            Next
+                        End If
+                    Next
+
+                    For t = 0 To arrNum - 1
+                        If memReg2.ContainsKey(memTargets(t)) Then
+                            memReg2.Item(memTargets(t)) = cmdValue
+                        Else
+                            memReg2.Add(memTargets(t), cmdValue)
+                        End If
+                    Next
+
+                End If
+
+            End If
+
+
+        Loop
+
+
+        If part = 1 Then
+            For t = 0 To UBound(memReg)
+                rollsum = rollsum + memReg(t)
+            Next
+        Else
+            For Each item In memReg2
+                rollSum = rollSum + item.Value
+            Next
+        End If
+
+        MsgBox("ANswer is " & rollSum)
+
+        Debug.Print("ANswer is " & rollSum)
+
+    End Sub
+
+
+    Function Convert2Bin(value As Int32) As String
+        Dim BinString As String
+
+        Do While Len(BinString) < 36
+
+            If value = 0 Then
+                BinString = "0" & BinString
+            ElseIf value Mod 2 = 0 Then
+                BinString = "0" & BinString
+            Else
+                BinString = "1" & BinString
+                value = value - 1
+            End If
+
+            value = value / 2
+
+        Loop
+
+        Convert2Bin = BinString
+
+    End Function
+
+    Function Convert2Dec(value As String) As Int64
+        Dim c As Integer, A As Int16, B As Int16, d As String
+
+        B = Len(value)
+
+        For c = 0 To B - 1
+            d = Mid(value, 36 - c, 1)
+            A = Val(d)
+            Convert2Dec = Convert2Dec + (2 ^ c) * A
+        Next
+    End Function
+
+End Module
